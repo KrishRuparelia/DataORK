@@ -18,7 +18,7 @@ def curate_ques(state: AgentSchema) -> AgentSchema:
 
     llm = pick_llm("low")  # Pick the appropriate LLM based on the level of the question
 
-    response = llm.invoke(f"Curate the following question: {user_question}").content
+    response = llm.invoke(f"Curate the following question: {user_question}").text
 
     state.curated_ques = response
     state.messages = state.messages + [HumanMessage(content=f"{response}")]  # Append the curated question to the messages list
@@ -73,7 +73,7 @@ def generate_sql(state: AgentSchema) -> AgentSchema:
 
     llm = pick_llm("medium")  # Pick the appropriate LLM based on the level of the question
 
-    generated_sql_query = llm.invoke(prompt).content  # Generate the SQL query using the LLM
+    generated_sql_query = llm.invoke(prompt).text  # Generate the SQL query using the LLM
 
     state.generated_sql_query = generated_sql_query
 
@@ -156,7 +156,7 @@ def represent_final_answer(state: AgentSchema) -> AgentSchema:
     Here is the user's original question: {curated_question}
     """
 
-    llm_response = llm.invoke(prompt).content  # Get the final answer from the LLM
+    llm_response = llm.invoke(prompt).text  # Get the final answer from the LLM
 
     state.final_answer = llm_response
     state.messages = state.messages + [AIMessage(content=f"{llm_response}")]  # Append the final answer to the messages list

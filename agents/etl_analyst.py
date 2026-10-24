@@ -69,7 +69,7 @@ def transform_load_tool(input_file_path:str,output_folder:str,output_format:str,
 
         """
 
-    response = llm.invoke(prompt).content 
+    response = llm.invoke(prompt).text
 
     # Optional Cleaning
     pandas_code = response.strip().strip('```').strip().lstrip('python').strip()

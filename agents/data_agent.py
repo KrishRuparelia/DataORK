@@ -3,14 +3,10 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from agents import sql_analyst
 from utils.llm_pick import pick_llm
-from utils.etl_tools import ETLTools
 from models.schema import RouterSchema, DataAgentSchema
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.graph import StateGraph, START, END
-from langchain.tools import tool
-from langchain_anthropic import ChatAnthropic
 from agents.etl_analyst import etl_analyst
 from agents.sql_analyst import sql_analyst
 
@@ -20,6 +16,14 @@ llm = pick_llm("medium")
 llm_router = llm.with_structured_output(RouterSchema)
 
 
+def _final_agent_message(response) -> AIMessage:
+    messages = response["messages"] if isinstance(response, dict) else response.messages
+    for message in reversed(messages):
+        if isinstance(message, AIMessage) and not message.tool_calls:
+            return message
+    raise ValueError("Child agent completed without a final assistant message.")
+
+
 # ---------------------------- DATA AGENT GRAPH ---------------------------- #
 
 
@@ -27,26 +31,17 @@ def router_node(state:DataAgentSchema):
 
     message = state.messages[-1].content
 
-    route_response_dict = llm_router.invoke(message).model_dump()
-
-    route_response = route_response_dict['answer']
-
-    state.route_response = route_response
-
-    return state
+    route_response = llm_router.invoke(message).answer
+    return {"route_response": route_response}
 
 def etl_node(state:DataAgentSchema):
 
     message = state.messages[-1].content
 
     response = etl_analyst.invoke(
-             {"messages":[HumanMessage(content=f"""
-            {message}
-    """)]}
-        ) 
-    state.messages = state.messages + [response]
-
-    return state
+        {"messages": [HumanMessage(content=message)]}
+    )
+    return {"messages": [_final_agent_message(response)]}
 
 def sql_node(state:DataAgentSchema):
 
@@ -65,12 +60,7 @@ def sql_node(state:DataAgentSchema):
     }
 
     response = sql_analyst.invoke(input_schema)
-
-    state.messages = state.messages + [response]
-
-    return state
-
-
+    return {"messages": [_final_agent_message(response)]}
 
 
 data_agent_graph = StateGraph(DataAgentSchema)
@@ -98,14 +88,6 @@ data_agent_graph.add_conditional_edges("router_node", route_edge,
 
 data_agent = data_agent_graph.compile()
 
-# Optional|
-from IPython.display import display, Image
-img = Image(data_agent.get_graph().draw_mermaid_png())
-with open("data_agent_graph.png", "wb") as f:
-    f.write(img.data)
-
-
-
 if __name__ == "__main__":
 
     response = data_agent.invoke(
@@ -114,6 +96,5 @@ if __name__ == "__main__":
     )
 
     print(response)
-
 
 
