@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+
+data/
+*_graph.png
+test_schema_details.txt
+
+.pytest_cache/
+.ruff_cache/

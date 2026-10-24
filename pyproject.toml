@@ -1,0 +1,19 @@
+[project]
+name = "agentic-ai-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv>=0.9.9",
+    "ipython>=9.17.1",
+    "langchain>=1.4.7",
+    "langchain-anthropic>=1.7.6",
+    "langchain-openai>=1.1.0",
+    "langgraph>=1.2.17",
+    "pandas>=3.1.0",
+    "psycopg2-binary",
+    "pyarrow>=26.0.0",
+    "pydantic>=2.14.1",
+    "requests>=2.34.2",
+]
